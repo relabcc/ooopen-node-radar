@@ -20,7 +20,7 @@ const clearCircle = (ctx, x, y, radius) => {
   ctx.clearRect(x - radius - 1, y - radius - 1, radius * 2 + 2, radius * 2 + 2);
 };
 
-const drawScoreLabels = (ctx, data, options = {}) => {
+const drawScoreLabels = (ctx, data, rScale, options = {}) => {
   const { 
     showScores = false, 
     scoreColor = '#4A90E2',
@@ -40,7 +40,9 @@ const drawScoreLabels = (ctx, data, options = {}) => {
   
   data.forEach((value, i) => {
     const angle = i * angleSlice + (degOffset * Math.PI) / 180;
-    const radius = maxRadius + 15; // Add some offset from the edge
+    // Use the same scale as the radar chart to get the actual endpoint radius
+    const dataRadius = rScale(value);
+    const radius = dataRadius + 25; // Add offset from the actual data point
     
     // Calculate endpoint position
     const x = Math.cos(angle - Math.PI / 2) * radius;
@@ -127,7 +129,7 @@ const getLoveColorCanvas = async ({ result, showScores = false, scoreColor = '#4
   clearCircle(chartCtx, 0, 0, minRadius);
 
   // Draw score labels at endpoints
-  drawScoreLabels(chartCtx, data, { showScores, scoreColor });
+  drawScoreLabels(chartCtx, data, rScale, { showScores, scoreColor });
 
   mainCtx.drawImage(chartCanvas, 0, 0, WIDTH, HEIGHT);
   mainCtx.drawImage(bgImage, 0, 0, WIDTH, HEIGHT);
