@@ -1,14 +1,25 @@
 const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
 module.exports = async (req, res) => {
-  const { chartId = '', factors = '{}', result = '{}' } = req.query;
+  const { 
+    chartId = '', 
+    factors = '{}', 
+    result = '{}',
+    showScores = 'false',
+    scoreColor = '#4A90E2'
+  } = req.query;
+  
+  const showScoresBool = showScores === 'true';
+  
   if (chartId.startsWith('women-power')) {
     const drawWomenPower = require('./women-power');
     const chart = chartId.slice(12);
     const buffer = await drawWomenPower({
       factors: JSON.parse(factors),
       result: JSON.parse(result),
-      chartId: chart
+      chartId: chart,
+      showScores: showScoresBool,
+      scoreColor
     });
     res.setHeader(
       'Cache-Control',
@@ -20,7 +31,9 @@ module.exports = async (req, res) => {
   if (chartId === 'love-color') {
     const getLoveColorCanvas = require('./love-color');
     const buffer = await getLoveColorCanvas({
-      result: JSON.parse(result)
+      result: JSON.parse(result),
+      showScores: showScoresBool,
+      scoreColor
     });
     res.setHeader(
       'Cache-Control',

@@ -48,6 +48,8 @@ GET /
 - chartId：可為 `women-power-1`、`women-power-2`、`love-color`
 - factors：URL 編碼的 JSON（多維度測驗模組會用到）
 - result：URL 編碼的 JSON
+- showScores：可選，設為 `"true"` 以顯示分數標籤於雷達端點（預設：`"false"`）
+- scoreColor：可選，分數標籤顏色（預設：`"#4A90E2"`）
 
 通用的 result 形狀：
 
@@ -55,6 +57,18 @@ GET /
 {
   "scores": { "<tagKey>": number }
 }
+```
+
+#### 分數標籤功能
+
+當 `showScores=true` 時，會在每個雷達端點顯示對應的分數值：
+- 分數標籤會根據軸線角度旋轉，確保可讀性
+- 標籤置中對齊於端點位置
+- 可透過 `scoreColor` 參數自訂顏色
+
+範例：
+```
+GET /?chartId=love-color&showScores=true&scoreColor=%23FF6B35&result=<url-encoded-json>
 ```
 
 ### women-power-1（能力）
