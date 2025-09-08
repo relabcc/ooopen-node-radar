@@ -127,7 +127,15 @@ const getChart2Data = (factors, result) => {
   return flattenTags.map((tag) => result.scores[tag] || 0);
 };
 
-const getCanvasResult = async ({ factors, result, chartId = '1', showScores = false, scoreColor = '#4A90E2' }) => {
+const getCanvasResult = async ({ 
+  factors, 
+  result, 
+  chartId = '1', 
+  showScores = false, 
+  scoreColor = '#4A90E2',
+  scoreFontSize = 18,
+  scoreFontFamily = 'Arial'
+}) => {
   const maxRadius = chartRadius[chartId - 1];
   const minRadius = innerRadius[chartId - 1];
   const maxValue = maxValues[chartId - 1];
@@ -195,7 +203,12 @@ const getCanvasResult = async ({ factors, result, chartId = '1', showScores = fa
   chartCtx.globalAlpha = 1;
   
   // Draw score labels at endpoints
-  drawScoreLabels(chartCtx, data, rScale, chartId, { showScores, scoreColor });
+  drawScoreLabels(chartCtx, data, rScale, chartId, { 
+    showScores, 
+    scoreColor, 
+    fontSize: scoreFontSize, 
+    fontFamily: scoreFontFamily 
+  });
 
   mainCtx.drawImage(chartCanvas, 0, 0, WIDTH, HEIGHT);
 

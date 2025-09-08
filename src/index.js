@@ -6,7 +6,9 @@ module.exports = async (req, res) => {
     factors = '{}', 
     result = '{}',
     showScores = 'false',
-    scoreColor = '#4A90E2'
+    scoreColor = '#4A90E2',
+    scoreFontSize = '20',
+    scoreFontFamily = 'Arial'
   } = req.query;
   
   const showScoresBool = showScores === 'true';
@@ -19,7 +21,9 @@ module.exports = async (req, res) => {
       result: JSON.parse(result),
       chartId: chart,
       showScores: showScoresBool,
-      scoreColor
+      scoreColor,
+      scoreFontSize: parseInt(scoreFontSize) || 18,
+      scoreFontFamily
     });
     res.setHeader(
       'Cache-Control',
@@ -33,7 +37,9 @@ module.exports = async (req, res) => {
     const buffer = await getLoveColorCanvas({
       result: JSON.parse(result),
       showScores: showScoresBool,
-      scoreColor
+      scoreColor,
+      scoreFontSize: parseInt(scoreFontSize) || 20,
+      scoreFontFamily
     });
     res.setHeader(
       'Cache-Control',

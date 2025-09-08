@@ -88,7 +88,13 @@ const getChartData = (result) => {
   );
 };
 
-const getLoveColorCanvas = async ({ result, showScores = false, scoreColor = '#4A90E2' }) => {
+const getLoveColorCanvas = async ({ 
+  result, 
+  showScores = false, 
+  scoreColor = '#4A90E2',
+  scoreFontSize = 20,
+  scoreFontFamily = 'Arial'
+}) => {
   let data = getChartData(result);
 
   const angleSlice = (Math.PI * 2) / data.length;
@@ -129,7 +135,12 @@ const getLoveColorCanvas = async ({ result, showScores = false, scoreColor = '#4
   clearCircle(chartCtx, 0, 0, minRadius);
 
   // Draw score labels at endpoints
-  drawScoreLabels(chartCtx, data, rScale, { showScores, scoreColor });
+  drawScoreLabels(chartCtx, data, rScale, { 
+    showScores, 
+    scoreColor, 
+    fontSize: scoreFontSize, 
+    fontFamily: scoreFontFamily 
+  });
 
   mainCtx.drawImage(chartCanvas, 0, 0, WIDTH, HEIGHT);
   mainCtx.drawImage(bgImage, 0, 0, WIDTH, HEIGHT);
