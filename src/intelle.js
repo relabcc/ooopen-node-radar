@@ -104,7 +104,7 @@ const getIntelleCanvas = async ({
     // ignore: canvas may already have it or registration unsupported
   }
   // Load background image first to size the canvas exactly
-  const bgImage = await loadImage(path.resolve(__dirname, `./intelle-${chartId}.png`));
+  const bgImage = await loadImage(path.resolve(__dirname, `./intelle-${chartId}.jpg`));
   const WIDTH = bgImage.width || 1200;
   const HEIGHT = bgImage.height || 1844;
 
