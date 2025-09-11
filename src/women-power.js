@@ -1,5 +1,5 @@
 const path = require('path');
-const { createCanvas, loadImage } = require('canvas');
+const ChartService = require('./chart-service');
 
 const handleFactorTags = (tags) =>
   tags &&
@@ -21,61 +21,6 @@ const yOffset = [810, 820];
 const degOffset = [14.5, 45];
 
 const maxValues = [15, 3];
-
-const clearCircle = (ctx, x, y, radius) => {
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-  ctx.clip();
-  ctx.clearRect(x - radius - 1, y - radius - 1, radius * 2 + 2, radius * 2 + 2);
-};
-
-const drawScoreLabels = (ctx, data, rScale, chartId, options = {}) => {
-  const { 
-    showScores = false, 
-    scoreColor = '#4A90E2',
-    fontSize = 18,
-    fontFamily = 'Arial'
-  } = options;
-  
-  if (!showScores) return;
-  
-  const angleSlice = (Math.PI * 2) / data.length;
-  const degOffsetRadians = (degOffset[chartId - 1] * Math.PI) / 180;
-  
-  ctx.save();
-  ctx.fillStyle = scoreColor;
-  ctx.font = `bold ${fontSize}px ${fontFamily}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  
-  data.forEach((value, i) => {
-    const angle = i * angleSlice + degOffsetRadians;
-    // Use the same scale as the radar chart to get the actual endpoint radius
-    const dataRadius = rScale(value);
-    const radius = dataRadius + 30; // Add offset from the actual data point
-    
-    // Calculate endpoint position
-    const x = Math.cos(angle - Math.PI / 2) * radius;
-    const y = Math.sin(angle - Math.PI / 2) * radius;
-    
-    ctx.save();
-    ctx.translate(x, y);
-    
-    // Rotate text to align with axis, but ensure readability
-    let textAngle = angle;
-    
-    // Flip text if it would be upside down for better readability
-    if (textAngle > Math.PI / 2 && textAngle < 3 * Math.PI / 2) {
-      textAngle += Math.PI;
-    }
-    
-    ctx.rotate(textAngle);
-    ctx.fillText(value.toString(), 0, 0);
-    ctx.restore();
-  });
-  
-  ctx.restore();
-};
 
 const getChart1Data = (factors, result) => {
   const orders = [
@@ -136,6 +81,7 @@ const getCanvasResult = async ({
   scoreFontSize = 18,
   scoreFontFamily = 'Arial'
 }) => {
+  const chartService = new ChartService();
   const maxRadius = chartRadius[chartId - 1];
   const minRadius = innerRadius[chartId - 1];
   const maxValue = maxValues[chartId - 1];
@@ -149,25 +95,20 @@ const getCanvasResult = async ({
     data = getChart2Data(factors, result);
   }
 
-  const angleSlice = (Math.PI * 2) / data.length;
+  const angleOffsetRad = (degOffset[chartId - 1] * Math.PI) / 180;
 
-  const { scaleLinear } = await import('d3-scale');
-  const { curveCardinalClosed, lineRadial } = await import('d3-shape');
-  const rScale = scaleLinear()
-    .domain([0, maxValue])
-    .range([minRadius, maxRadius]);
+  // Setup radar chart components using service
+  const { rScale, radarLine } = await chartService.setupRadarChart(data, {
+    maxValue: maxValue,
+    minRadius: minRadius,
+    maxRadius: maxRadius,
+    angleOffset: angleOffsetRad
+  });
 
-  const radarLine = lineRadial()
-    .curve(curveCardinalClosed)
-    .radius((d) => rScale(d))
-    .angle((d, i) => i * angleSlice + (degOffset[chartId - 1] * Math.PI) / 180);
+  // Create canvas pair
+  const { mainCanvas, mainCtx, chartCanvas, chartCtx } = chartService.createCanvasPair(WIDTH, HEIGHT);
 
-  const mainCanvas = createCanvas(WIDTH, HEIGHT);
-  const mainCtx = mainCanvas.getContext('2d');
-  const chartCanvas = createCanvas(WIDTH, HEIGHT);
-  const chartCtx = chartCanvas.getContext('2d');
-
-  const bgImage = await loadImage(
+  const bgImage = await chartService.loadImageCached(
     path.resolve(__dirname, `./chart-${chartId}.png`)
   );
 
@@ -196,18 +137,21 @@ const getCanvasResult = async ({
   chartCtx.fill();
 
   if (chartId === '2') {
-    clearCircle(chartCtx, 0, 0, minRadius);
+    chartService.clearCircle(chartCtx, 0, 0, minRadius);
   }
 
   // Reset globalAlpha for score labels
   chartCtx.globalAlpha = 1;
   
-  // Draw score labels at endpoints
-  drawScoreLabels(chartCtx, data, rScale, chartId, { 
+  // Draw score labels at endpoints using service
+  chartService.drawScoreLabels(chartCtx, data, rScale, { 
     showScores, 
     scoreColor, 
     fontSize: scoreFontSize, 
-    fontFamily: scoreFontFamily 
+    fontFamily: scoreFontFamily,
+    fontWeight: 'bold',
+    angleOffset: angleOffsetRad,
+    radiusOffset: 30
   });
 
   mainCtx.drawImage(chartCanvas, 0, 0, WIDTH, HEIGHT);

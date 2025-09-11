@@ -1,5 +1,6 @@
 const path = require('path');
-const { createCanvas, loadImage, registerFont } = require('canvas');
+const { createCanvas } = require('canvas');
+const ChartService = require('./chart-service');
 
 // No factor usage for intelle; data comes only from `result`
 
@@ -15,48 +16,6 @@ const LINE_WIDTH = 1;
 
 // Value range: min 0, max 50
 const MAX_VALUE = 50;
-
-// Text/label helper (ported from love-color with small tweaks)
-const drawScoreLabels = (ctx, data, rScale, angleOffsetRad = 0, options = {}) => {
-  const {
-    showScores = false,
-    scoreColor = '#4A90E2',
-    fontSize = 20,
-    fontFamily = 'Arial'
-  } = options;
-
-  if (!showScores) return;
-
-  const angleSlice = (Math.PI * 2) / data.length;
-
-  ctx.save();
-  ctx.fillStyle = scoreColor;
-  ctx.font = `normal ${fontSize}px ${fontFamily}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  data.forEach((value, i) => {
-    const angle = i * angleSlice + angleOffsetRad;
-    const dataRadius = rScale(value);
-    const radius = dataRadius + 25; // offset outward from the actual point
-
-    const x = Math.cos(angle - Math.PI / 2) * radius;
-    const y = Math.sin(angle - Math.PI / 2) * radius;
-
-    ctx.save();
-    ctx.translate(x, y);
-
-    let textAngle = angle;
-    if (textAngle > Math.PI / 2 && textAngle < (3 * Math.PI) / 2) {
-      textAngle += Math.PI; // keep upright
-    }
-    ctx.rotate(textAngle);
-    ctx.fillText(value?.toString?.() ?? String(value), 0, 0);
-    ctx.restore();
-  });
-
-  ctx.restore();
-};
 
 // Data extraction from `result` only
 const DIMENSIONS = 10;
@@ -95,16 +54,18 @@ const getIntelleCanvas = async ({
   scoreFontSize = 20,
   scoreFontFamily = 'Ropa Sans'
 }) => {
+  const chartService = new ChartService();
+  
   // Register custom font once (silent if registration fails)
-  try {
-    registerFont(path.resolve(__dirname, './fonts/RopaSans-Regular.ttf'), {
-      family: 'Ropa Sans'
-    });
-  } catch {
-    // ignore: canvas may already have it or registration unsupported
-  }
+  chartService.registerFontSafe(
+    path.resolve(__dirname, './fonts/RopaSans-Regular.ttf'),
+    'Ropa Sans'
+  );
+
   // Load background image first to size the canvas exactly
-  const bgImage = await loadImage(path.resolve(__dirname, `./intelle-${chartId}.jpg`));
+  const bgImage = await chartService.loadImageCached(
+    path.resolve(__dirname, `./intelle-${chartId}.jpg`)
+  );
   const WIDTH = bgImage.width || 1200;
   const HEIGHT = bgImage.height || 1844;
 
@@ -119,26 +80,19 @@ const getIntelleCanvas = async ({
     return blankCanvas.toBuffer('image/png');
   }
 
-  const angleSlice = (Math.PI * 2) / data.length;
-
-  const { scaleLinear } = await import('d3-scale');
-  const { curveCardinalClosed, lineRadial } = await import('d3-shape');
-
-  // Range from 0 to MAX_RADIUS (no inner hole for intelle unless later specified)
-  const rScale = scaleLinear().domain([0, MAX_VALUE]).range([0, MAX_RADIUS]);
-
   const degOffset = 18;
   const angleOffsetRad = (degOffset * Math.PI) / 180;
 
-  const radarLine = lineRadial()
-    .curve(curveCardinalClosed)
-    .radius((d) => rScale(d))
-    .angle((d, i) => i * angleSlice + angleOffsetRad);
+  // Setup radar chart components using service
+  const { rScale, radarLine } = await chartService.setupRadarChart(data, {
+    maxValue: MAX_VALUE,
+    minRadius: 0,
+    maxRadius: MAX_RADIUS,
+    angleOffset: angleOffsetRad
+  });
 
-  const mainCanvas = createCanvas(WIDTH, HEIGHT);
-  const mainCtx = mainCanvas.getContext('2d');
-  const chartCanvas = createCanvas(WIDTH, HEIGHT);
-  const chartCtx = chartCanvas.getContext('2d');
+  // Create canvas pair
+  const { mainCanvas, mainCtx, chartCanvas, chartCtx } = chartService.createCanvasPair(WIDTH, HEIGHT);
 
   // Draw background first
   mainCtx.drawImage(bgImage, 0, 0, WIDTH, HEIGHT);
@@ -163,12 +117,15 @@ const getIntelleCanvas = async ({
   chartCtx.strokeStyle = STROKE_COLOR;
   chartCtx.stroke();
 
-  // Labels
-  drawScoreLabels(chartCtx, data, rScale, angleOffsetRad, {
+  // Labels using service
+  chartService.drawScoreLabels(chartCtx, data, rScale, {
     showScores,
     scoreColor,
     fontSize: scoreFontSize,
-    fontFamily: scoreFontFamily
+    fontFamily: scoreFontFamily,
+    fontWeight: 'normal',
+    angleOffset: angleOffsetRad,
+    radiusOffset: 25
   });
 
   // Composite onto main
