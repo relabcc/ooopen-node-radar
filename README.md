@@ -146,6 +146,16 @@ GET /?chartId=love-color&result=<url-encoded-json>
 
 提示：在瀏覽器測試時，請將 JSON 以 URL 方式編碼。在 Node/JS 中可使用 `encodeURIComponent(JSON.stringify(obj))`。
 
+## 架構設計
+
+本專案使用統一的 `ChartService` 來管理所有繪圖功能，提升了代碼的可維護性和擴展性：
+
+- **ChartService**: 統一的圖表繪製服務，包含共用的繪圖邏輯
+- **模組化設計**: 各圖表類型專注於特定的配置和數據處理
+- **向後兼容**: 保持所有現有 API 的完整兼容性
+
+詳細的服務架構說明請參考 [CHART_SERVICE.md](./CHART_SERVICE.md)。
+
 ## 檔案結構
 
 - `server.js` — Express 伺服器於 `/` 輸出影像
