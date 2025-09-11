@@ -2,6 +2,7 @@ const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
 module.exports = async (req, res) => {
   const { chartId = '', factors = '{}', result = '{}' } = req.query;
+
   if (chartId.startsWith('women-power')) {
     const drawWomenPower = require('./women-power');
     const chart = chartId.slice(12);
@@ -9,6 +10,24 @@ module.exports = async (req, res) => {
       factors: JSON.parse(factors),
       result: JSON.parse(result),
       chartId: chart
+    });
+    res.setHeader(
+      'Cache-Control',
+      `public, max-age=${sevenDays}, s-maxage=${sevenDays}`
+    );
+    res.setHeader('Content-Type', 'image/png');
+    return res.send(buffer);
+  }
+  if (chartId.startsWith('intelle')) {
+    const getIntelleCanvas = require('./intelle');
+    const chart = chartId.slice('intelle-'.length);
+    const buffer = await getIntelleCanvas({
+      result: JSON.parse(result),
+      chartId: chart,
+      showScores: true,
+      scoreColor: '#325591',
+      scoreFontSize: 40,
+      scoreFontFamily: 'Arial'
     });
     res.setHeader(
       'Cache-Control',
