@@ -1,29 +1,33 @@
 const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
 module.exports = async (req, res) => {
-  const { 
-    chartId = '', 
-    factors = '{}', 
-    result = '{}',
-    showScores = 'false',
-    scoreColor = '#4A90E2',
-    scoreFontSize = '20',
-    scoreFontFamily = 'Arial'
-  } = req.query;
-  
-  const showScoresBool = showScores === 'true';
-  
+  const { chartId = '', factors = '{}', result = '{}' } = req.query;
+
   if (chartId.startsWith('women-power')) {
     const drawWomenPower = require('./women-power');
     const chart = chartId.slice(12);
     const buffer = await drawWomenPower({
       factors: JSON.parse(factors),
       result: JSON.parse(result),
+      chartId: chart
+    });
+    res.setHeader(
+      'Cache-Control',
+      `public, max-age=${sevenDays}, s-maxage=${sevenDays}`
+    );
+    res.setHeader('Content-Type', 'image/png');
+    return res.send(buffer);
+  }
+  if (chartId.startsWith('intelle')) {
+    const getIntelleCanvas = require('./intelle');
+    const chart = chartId.slice('intelle-'.length);
+    const buffer = await getIntelleCanvas({
+      result: JSON.parse(result),
       chartId: chart,
-      showScores: showScoresBool,
-      scoreColor,
-      scoreFontSize: parseInt(scoreFontSize) || 18,
-      scoreFontFamily
+      showScores: true,
+      scoreColor: '#325591',
+      scoreFontSize: 40,
+      scoreFontFamily: 'Arial'
     });
     res.setHeader(
       'Cache-Control',
@@ -35,11 +39,7 @@ module.exports = async (req, res) => {
   if (chartId === 'love-color') {
     const getLoveColorCanvas = require('./love-color');
     const buffer = await getLoveColorCanvas({
-      result: JSON.parse(result),
-      showScores: showScoresBool,
-      scoreColor,
-      scoreFontSize: parseInt(scoreFontSize) || 20,
-      scoreFontFamily
+      result: JSON.parse(result)
     });
     res.setHeader(
       'Cache-Control',
