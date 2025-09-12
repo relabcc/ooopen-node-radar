@@ -20,7 +20,39 @@ const MAX_VALUE = 50;
 // Data extraction from `result` only
 const DIMENSIONS = 10;
 
-const getChartDataFromResult = (result) => {
+const RESULT_KEYS_1 = [
+  'bFvA8r',
+  'psaC-r',
+  '-1OG2g',
+  'v9lAGL',
+  'wzwkeT',
+  'slXqQ7',
+  'n8WFDI',
+  '9UNOSA',
+  'mkvcta',
+  'ockkuf'
+];
+
+const RESULT_KEYS_2 = [
+  '_Ia9CU',
+  'g90ksj',
+  'fNJ8fm',
+  'Ov2l9G',
+  'JtBa2H',
+  'Fb2dGK',
+  'OixAU4',
+  'lgeHpP',
+  'n3UJTR',
+  'I19Po6'
+];
+
+// Helper mapping by chart id (string)
+const RESULT_KEYS_BY_CHART = {
+  '1': RESULT_KEYS_1,
+  '2': RESULT_KEYS_2
+};
+// Extract numeric chart data from result, ordering by predefined key list when available
+const getChartDataFromResult = (result, chartId) => {
   if (!result) return [];
   // Prefer explicit arrays if provided
   if (Array.isArray(result.values)) {
@@ -34,6 +66,15 @@ const getChartDataFromResult = (result) => {
 
   // If scores is an object and orders array is provided, map by orders
   if (result.scores && typeof result.scores === 'object') {
+    // First: attempt to use predefined key ordering based on chartId
+    const keyList = RESULT_KEYS_BY_CHART[String(chartId)] || null;
+    if (keyList) {
+      const mappedByChart = keyList.map((k) => {
+        const v = result.scores[k];
+        return typeof v === 'number' ? v : Number(v) || 0;
+      });
+      return mappedByChart;
+    }
     if (Array.isArray(result.orders) && result.orders.length >= DIMENSIONS) {
       const mapped = result.orders.slice(0, DIMENSIONS).map((k) => Number(result.scores[k]) || 0);
       return mapped;
@@ -70,7 +111,7 @@ const getIntelleCanvas = async ({
   const HEIGHT = bgImage.height || 1844;
 
   // Data
-  let data = getChartDataFromResult(result);
+  let data = getChartDataFromResult(result, chartId);
 
   if (!Array.isArray(data) || data.length === 0) {
     // Graceful fallback: nothing to draw, just return background
