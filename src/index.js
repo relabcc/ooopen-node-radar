@@ -25,9 +25,6 @@ module.exports = async (req, res) => {
       result: JSON.parse(result),
       chartId: chart,
       showScores: true,
-      scoreColor: '#325591',
-      scoreFontSize: 40,
-      scoreFontFamily: 'Arial'
     });
     res.setHeader(
       'Cache-Control',

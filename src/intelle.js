@@ -64,9 +64,8 @@ const getChartDataFromResult = (result, chartId) => {
     return arr.length >= DIMENSIONS ? arr.slice(0, DIMENSIONS) : arr.concat(Array(Math.max(0, DIMENSIONS - arr.length)).fill(0));
   }
 
-  // If scores is an object and orders array is provided, map by orders
+  // If scores is an object: map by predefined key list for chartId if available, else by object value order
   if (result.scores && typeof result.scores === 'object') {
-    // First: attempt to use predefined key ordering based on chartId
     const keyList = RESULT_KEYS_BY_CHART[String(chartId)] || null;
     if (keyList) {
       const mappedByChart = keyList.map((k) => {
@@ -75,11 +74,6 @@ const getChartDataFromResult = (result, chartId) => {
       });
       return mappedByChart;
     }
-    if (Array.isArray(result.orders) && result.orders.length >= DIMENSIONS) {
-      const mapped = result.orders.slice(0, DIMENSIONS).map((k) => Number(result.scores[k]) || 0);
-      return mapped;
-    }
-    // Fallback: use numeric values in object iteration order
     const nums = Object.values(result.scores).filter((v) => typeof v === 'number');
     return nums.length >= DIMENSIONS ? nums.slice(0, DIMENSIONS) : nums.concat(Array(Math.max(0, DIMENSIONS - nums.length)).fill(0));
   }
@@ -91,12 +85,12 @@ const getIntelleCanvas = async ({
   result,
   chartId = '1',
   showScores = false,
-  scoreColor = '#4A90E2',
-  scoreFontSize = 20,
+  scoreColor = '#325591',
+  scoreFontSize = 40,
   scoreFontFamily = 'Ropa Sans'
 }) => {
   const chartService = new ChartService();
-  
+
   // Register custom font once (silent if registration fails)
   chartService.registerFontSafe(
     path.resolve(__dirname, './fonts/RopaSans-Regular.ttf'),
@@ -164,9 +158,9 @@ const getIntelleCanvas = async ({
     scoreColor,
     fontSize: scoreFontSize,
     fontFamily: scoreFontFamily,
-    fontWeight: 'normal',
+    fontWeight: '500',
     angleOffset: angleOffsetRad,
-    radiusOffset: 25
+    radiusOffset: 30
   });
 
   // Composite onto main

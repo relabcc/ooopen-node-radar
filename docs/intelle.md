@@ -16,8 +16,7 @@ GET /?chartId=intelle-<n>&result=<json>
 
 1. `{"values": [n0, n1, ...]}` – 數字陣列（取前 10 個；不足以 0 補齊）。
 2. `{"scores": [n0, n1, ...]}` – 陣列的替代名稱。
-3. `{"scores": { key: value, ... }, "orders": [key0, key1, ...]}` – 物件 + 明確排序陣列（取前 10）。
-4. `{"scores": { key: value, ... }}` – 單純物件：會依物件列舉順序取數字。
+3. `{"scores": { key: value, ... }}` – 物件：會依預設 key 順序（見下）或物件本身列舉順序（若該 chartId 無預設 key）取數字。
 
 數值預期範圍 0–50（繪圖比例依據此範圍）。非數字會被忽略或轉為 0。
 
@@ -34,7 +33,7 @@ Chart 2 (`chartId=intelle-2`):
 ```
 若該 key 在 `scores` 不存在，其值視為 0。
 
-若未來新增的 chartId 沒有對應預設 key，則會 fallback：先看 `orders` 陣列；若沒有則按物件本身列舉順序。
+若未來新增的 chartId 沒有對應預設 key，則會 fallback：直接按物件本身列舉順序（`orders` 機制已移除）。
 
 ## 繪圖參數 (Rendering Options)
 目前伺服端呼叫時固定設定：
@@ -66,10 +65,7 @@ http://localhost:8000/?chartId=intelle-1&result={"values":[10,20,30,40,25,15,45,
 ```
 http://localhost:8000/?chartId=intelle-2&result={"scores":{"_Ia9CU":12,"g90ksj":28,"fNJ8fm":33,"Ov2l9G":21,"JtBa2H":50,"Fb2dGK":44,"OixAU4":38,"lgeHpP":9,"n3UJTR":25,"I19Po6":41}}
 ```
-使用 `orders` 自訂排序（示例）:
-```
-http://localhost:8000/?chartId=intelle-1&result={"scores":{"a":5,"b":10,"c":15},"orders":["c","b","a"]}
-```
+（`orders` 機制已移除；若需要自訂排序請自行提供 `values` 陣列。）
 
 （URL 編碼版本）
 ```
@@ -77,8 +73,7 @@ Chart1 Enc:
 http://localhost:8000/?chartId=intelle-1&result=%7B%22values%22%3A%5B10%2C20%2C30%2C40%2C25%2C15%2C45%2C32%2C18%2C27%5D%7D
 Chart2 Enc:
 http://localhost:8000/?chartId=intelle-2&result=%7B%22scores%22%3A%7B%22_Ia9CU%22%3A12%2C%22g90ksj%22%3A28%2C%22fNJ8fm%22%3A33%2C%22Ov2l9G%22%3A21%2C%22JtBa2H%22%3A50%2C%22Fb2dGK%22%3A44%2C%22OixAU4%22%3A38%2C%22lgeHpP%22%3A9%2C%22n3UJTR%22%3A25%2C%22I19Po6%22%3A41%7D%7D
-Orders Enc:
-http://localhost:8000/?chartId=intelle-1&result=%7B%22scores%22%3A%7B%22a%22%3A5%2C%22b%22%3A10%2C%22c%22%3A15%7D%2C%22orders%22%3A%5B%22c%22%2C%22b%22%2C%22a%22%5D%7D
+（`orders` 範例已移除）
 ```
 
 ## 輸出 (Output)
@@ -91,4 +86,4 @@ http://localhost:8000/?chartId=intelle-1&result=%7B%22scores%22%3A%7B%22a%22%3A5
 - 額外圖例 / 標題疊加
 
 ---
-最後更新：2025-09-12
+最後更新：2025-09-12（移除 orders 排序機制）
